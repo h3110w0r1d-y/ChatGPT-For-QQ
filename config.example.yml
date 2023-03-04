@@ -1,0 +1,28 @@
+openai:
+  api_key: sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# 百度智能云 内容审核-文本
+baiduai:
+  enable: true
+  api_key: xxxxxxx
+  secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# 自定义敏感词列表
+sensitive_list:
+  - 自定义
+  - 敏感词
+  - 列表
+
+mirai:
+  qq: xxxxxxx
+  api_key: xxxxxxxx
+  http_url: http://localhost:8080
+  ws_url: http://localhost:8080
+
+# 在每条消息最后显示消耗的Token数量
+show_cost_tokens: true
+
+# 开启Bot的群号码, 为空时不限制
+group_list:
+  - 123456789
+  - 987654321
