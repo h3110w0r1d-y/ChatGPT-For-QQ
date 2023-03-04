@@ -101,9 +101,12 @@ app = Ariadne(
 
 
 def sensitive_check(message):
+    if config.sensitive_list is None:
+        return False
     for x in config.sensitive_list:
         if x in message.lower():
             return True
+    return False
 
 
 def handle_message(bot_id, message, group_id=None, user_id=None):
@@ -157,7 +160,7 @@ async def on_friend_message(app: Ariadne, friend: Friend, chain: MessageChain):
 @app.broadcast.receiver("GroupMessage", decorators=[MentionMe()])
 async def on_group_mention_me(group: Group, member: Member, source: Source, chain: MessageChain = MentionMe()):
     # 限制启用Bot的群聊
-    if len(config.group_list) and group.id not in config.group_list:
+    if config.group_list is not None and group.id not in config.group_list:
         return
     response = await asyncio.to_thread(
         handle_message,
