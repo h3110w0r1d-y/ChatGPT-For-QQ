@@ -11,45 +11,26 @@ import functools
 import contextvars
 import requests
 import re
+import os
 import openai
-import yaml
 
-with open("config.yml", "r") as f:
-    class Dict(dict):
-        __setattr__ = dict.__setitem__
-        __getattr__ = dict.__getitem__
-
-    def Dict2Obj(dict_obj):
-        if not isinstance(dict_obj, dict):
-            return dict_obj
-        d = Dict()
-        for k, v in dict_obj.items():
-            d[k] = Dict2Obj(v)
-        return d
-    config = Dict2Obj(yaml.safe_load(f))
-
-openai.api_key = config.openai.api_key
+from config import Config
+from admin import Admin
 
 
-# 获取百度AI access_token
-def get_access_token():
-    url = "https://aip.baidubce.com/oauth/2.0/token"
-    params = {
-        "grant_type": "client_credentials",
-        "client_id": config.baiduai.api_key,
-        "client_secret": config.baiduai.secret_key
-    }
-    result = requests.post(url, params=params).json()
-    return str(result.get("access_token"))
+pid = str(os.getpid())
+with open('bot.pid', "w") as f:
+    f.write(pid)
 
 
-if config.baiduai.enable:
-    access_token = get_access_token()
+admin = Admin()
+
+openai.api_key = Config.openai.api_key
 
 
 # 内容审核
 def check_message_safe(message: str):
-    if not config.baiduai.enable:
+    if not Config.baiduai.enable:
         return True  # safe
     url = "https://aip.baidubce.com/rest/2.0/solution/v1/text_censor/v2/user_defined?access_token=" + access_token
 
@@ -92,18 +73,18 @@ if not hasattr(asyncio, 'to_thread'):
 
 app = Ariadne(
     ConnectionConfig(
-        config.mirai.qq,
-        config.mirai.api_key,
-        HttpClientConfig(host=config.mirai.http_url),
-        WebsocketClientConfig(host=config.mirai.ws_url),
+        Config.mirai.qq,
+        Config.mirai.api_key,
+        HttpClientConfig(host=Config.mirai.http_url),
+        WebsocketClientConfig(host=Config.mirai.ws_url),
     ),
 )
 
 
 def sensitive_check(message):
-    if config.sensitive_list is None:
+    if Config.sensitive_list is None:
         return False
-    for x in config.sensitive_list:
+    for x in Config.sensitive_list:
         if x in message.lower():
             return True
     return False
@@ -117,6 +98,10 @@ def handle_message(bot_id, message, group_id=None, user_id=None):
     if message.strip() in ["重置会话"]:
         chatbot.reset_bot(bot_id)
         return "已重置"
+    if int(Config.admin_qq) == user_id:
+        response = admin.handle_message(message.strip())
+        if response is not None:
+            return response
 
     if message.strip().startswith("周报:") or message.strip().startswith("周报："):
         prompt_pre = "请帮我把以下的工作内容填充为一篇完整的周报,用 markdown 格式以分点叙述的形式输出:"
@@ -136,22 +121,27 @@ def handle_message(bot_id, message, group_id=None, user_id=None):
         response, usage = chatbot.get_bot(bot_id).ask(message)
         if sensitive_check(response) or not check_message_safe(response):
             return "Blocked"
-        return response + '\n\ncost:' + str(usage.total_tokens)
+        if Config.show_cost_tokens:
+            return response + '\n\ncost:' + str(usage.total_tokens)
+        return response
     else:
-        message = f"@{user_id}:{message}"
+        message = f"{user_id}:{message}"
         response, usage = chatbot.get_bot(bot_id, group=True).ask(message)
         if sensitive_check(response) or not check_message_safe(response):
             return "Blocked"
-        return response + '\n\ncost:' + str(usage.total_tokens)
+        if Config.show_cost_tokens:
+            return response + '\n\ncost:' + str(usage.total_tokens)
+        return response
 
 
 @app.broadcast.receiver("FriendMessage")
-async def on_friend_message(app: Ariadne, friend: Friend, chain: MessageChain):
+async def on_friend_message(friend: Friend, chain: MessageChain):
     if friend.id == app.account:
         return
     response = await asyncio.to_thread(
         handle_message,
         bot_id=f"user-{friend.id}",
+        user_id=friend.id,
         message=chain.display
     )
     await app.send_message(friend, response)
@@ -160,7 +150,7 @@ async def on_friend_message(app: Ariadne, friend: Friend, chain: MessageChain):
 @app.broadcast.receiver("GroupMessage", decorators=[MentionMe()])
 async def on_group_mention_me(group: Group, member: Member, source: Source, chain: MessageChain = MentionMe()):
     # 限制启用Bot的群聊
-    if config.group_list is not None and group.id not in config.group_list:
+    if Config.group_list is not None and group.id not in Config.group_list:
         return
     response = await asyncio.to_thread(
         handle_message,
@@ -173,11 +163,12 @@ async def on_group_mention_me(group: Group, member: Member, source: Source, chai
     await app.send_message(group, chain, quote=source)
 
 
-@app.broadcast.receiver("TempMessage", decorators=[MentionMe()])
-async def on_temp_message(group: Group, member: Member, chain: MessageChain = MentionMe()):
+@app.broadcast.receiver("TempMessage")
+async def on_temp_message(group: Group, member: Member, chain: MessageChain):
     response = await asyncio.to_thread(
         handle_message,
         bot_id=f"user-{member.id}",
+        user_id=member.id,
         message=chain.display
     )
     await app.send_message(member, response)

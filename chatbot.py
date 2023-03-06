@@ -5,7 +5,7 @@ ENCODER = tiktoken.get_encoding("gpt2")
 
 bot_list = {}
 
-GroupBotPrompt = "你是一个群聊助手，在后面的对话中会有多个人一块和你聊天，给你发的消息的开头由'@'+由数字组成的uid+':'组成，表示说话的人是哪个用户，':'后面是这个用户说的话，在用户说的话中中提到某人也是用'@'+uid表示"
+GroupBotPrompt = "你是一个群聊助手，在后面的对话中会有多个人一块和你聊天，给你发的消息的开头由用户id+':'组成，表示说话的人是哪个用户，':'后面是这个用户说的话，在消息中提到某人用'@'+uid表示"
 
 
 def get_bot(uid: str, group: bool = False, system_prompt: str = None):

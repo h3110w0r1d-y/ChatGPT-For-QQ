@@ -1,3 +1,6 @@
+# 管理员QQ号
+admin_qq: 123456
+
 openai:
   api_key: sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
