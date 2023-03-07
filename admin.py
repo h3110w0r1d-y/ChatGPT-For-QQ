@@ -109,8 +109,10 @@ class Admin:
             if isinstance(menu[cmd], str) and menu[cmd] == 'exit':
                 if len(self.menu_pos) != 0:
                     self.menu_pos.pop()
-                self.in_menu = False
-                return "退出菜单"
+                    return None
+                if len(self.menu_pos) == 0:
+                    self.in_menu = False
+                    return "退出菜单"
             # 调用菜单中的函数
             if callable(menu[cmd]):
                 return menu[cmd]()

@@ -32,7 +32,7 @@ openai.api_key = Config.openai.api_key
 def check_message_safe(message: str):
     if not Config.baiduai.enable:
         return True  # safe
-    url = "https://aip.baidubce.com/rest/2.0/solution/v1/text_censor/v2/user_defined?access_token=" + access_token
+    url = "https://aip.baidubce.com/rest/2.0/solution/v1/text_censor/v2/user_defined?access_token=" + Config.baiduai.access_token
 
     payload = {"text": message}
     headers = {
@@ -40,7 +40,7 @@ def check_message_safe(message: str):
         'Accept': 'application/json'
     }
     response = requests.request("POST", url, headers=headers, data=payload)
-
+    print(response.json())
     if response.json().get("conclusionType") != 1:
         return False  # unsafe
     return True  # safe
