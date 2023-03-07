@@ -38,6 +38,12 @@ def del_group(group_id: int):
     return "已删除群聊"
 
 
+def get_group_list():
+    if Config.group_list is None:
+        return "群聊列表为空,所有群聊都会启用"
+    return "启用群聊:\n" + '\n'.join([str(x) for x in Config.group_list])
+
+
 Menu = {
     "menu":
         "=====  菜  单  =====\n"
@@ -59,15 +65,19 @@ Menu = {
             "===== 群聊控制 =====\n"
             "1. 增加群聊\n"
             "2. 删除群聊\n"
+            "3. 查看启用群聊\n"
             "0. 返回",
         '1': {
-            'desc': "请输入要增加的群号",
+            'desc': "请发送要增加的群号(发送0取消操作)",
             'func': add_group,
+            '0': 'exit',
         },
         '2': {
-            'desc': "请输入要增加的群号",
+            'desc': "请发送要删除的群号(发送0取消操作)",
             'func': del_group,
+            '0': 'exit',
         },
+        '3': get_group_list,
         '0': 'exit',
     },
     '0': 'exit',
@@ -106,13 +116,14 @@ class Admin:
             if cmd not in menu:
                 return "无效指令"
             # 调用菜单中的exit
-            if isinstance(menu[cmd], str) and menu[cmd] == 'exit':
-                if len(self.menu_pos) != 0:
-                    self.menu_pos.pop()
-                    return None
-                if len(self.menu_pos) == 0:
-                    self.in_menu = False
-                    return "退出菜单"
+            if isinstance(menu[cmd], str):
+                if menu[cmd] == 'exit':
+                    if len(self.menu_pos) != 0:
+                        self.menu_pos.pop()
+                        return None
+                    if len(self.menu_pos) == 0:
+                        self.in_menu = False
+                        return "退出菜单"
             # 调用菜单中的函数
             if callable(menu[cmd]):
                 return menu[cmd]()
@@ -121,10 +132,13 @@ class Admin:
                 self.menu_pos.append(cmd)
                 return None
             # 其他情况
-            return None
+            return "无效指令"
 
         # 当前在func菜单中
         if 'func' in menu and callable(menu['func']):
+            if cmd in menu and menu[cmd] == 'exit':
+                self.menu_pos.pop()
+                return None
             self.menu_pos.pop()
             response = menu['func'](cmd)
             return response

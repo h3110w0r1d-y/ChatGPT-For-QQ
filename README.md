@@ -41,12 +41,14 @@ ChatGPT For QQ
 
 修改配置文件 admin_qq，使用管理员QQ发送`#菜单`进入菜单。如果想自己加功能，可以直接修改`admin.py`中的`Menu`字典，可以继续往下嵌套菜单。目前仅实现了三种类型的菜单，不过感觉已经足够用了。
 
+
 <details>
 <summary>管理员菜单使用样例</summary>
 
-![3498f8d9d3d9fd41cbcc1d34ea22008e](https://user-images.githubusercontent.com/52311174/223122619-b099065b-0883-4648-afdd-3b05e5d8f114.jpeg)
+<img src="https://user-images.githubusercontent.com/52311174/223122619-b099065b-0883-4648-afdd-3b05e5d8f114.jpeg" width="400" />
 
 </details>
+
 
 
 ## 其他
