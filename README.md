@@ -53,9 +53,3 @@ ChatGPT For QQ
 
 ## 其他
 功能很简单，没几行代码，欢迎Fork、提PR改进
-
-<style>
-img[alt="3498f8d9d3d9fd41cbcc1d34ea22008e"]{
-  width:400px;
-}
-</style>
