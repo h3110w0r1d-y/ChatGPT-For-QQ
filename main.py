@@ -1,4 +1,11 @@
-import chatbot
+import re
+import os
+import asyncio
+import functools
+import contextvars
+
+import requests
+import openai
 from graia.ariadne.app import Ariadne
 from graia.ariadne.connection.config import HttpClientConfig, WebsocketClientConfig
 from graia.ariadne.connection.config import config as ConnectionConfig
@@ -6,14 +13,8 @@ from graia.ariadne.message import Source
 from graia.ariadne.message.chain import MessageChain, At
 from graia.ariadne.message.parser.base import MentionMe
 from graia.ariadne.model import Friend, Group, Member
-import asyncio
-import functools
-import contextvars
-import requests
-import re
-import os
-import openai
 
+import chatbot
 from config import Config
 from admin import Admin
 
@@ -32,7 +33,8 @@ openai.api_key = Config.openai.api_key
 def check_message_safe(message: str):
     if not Config.baiduai.enable:
         return True  # safe
-    url = "https://aip.baidubce.com/rest/2.0/solution/v1/text_censor/v2/user_defined?access_token=" + Config.baiduai.access_token
+    url = "https://aip.baidubce.com/rest/2.0/solution/v1/text_censor/v2/user_defined?access_token=" + \
+        Config.baiduai.access_token
 
     payload = {"text": message}
     headers = {
@@ -175,4 +177,3 @@ async def on_temp_message(group: Group, member: Member, chain: MessageChain):
 
 
 app.launch_blocking()
-
